@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buku Tamu KPU Kuningan</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .glass { backdrop-filter: blur(16px); background-color: rgba(255, 255, 255, 0.85); }
+  </style>
+</head>
+<body class="bg-slate-50 overflow-x-hidden text-slate-800">
+
+  <div id="welcomeScreen" class="fixed inset-0 z-50 bg-gradient-to-tr from-amber-500 via-red-600 to-indigo-900 flex flex-col justify-center items-center text-white transition-all duration-1000">
+    <div class="text-center animate-bounce mb-4">
+      <i class="fa-solid fa-users-viewfinder text-7xl text-amber-300 drop-shadow-md"></i>
+    </div>
+    <h1 class="text-4xl font-extrabold tracking-wide mb-2 drop-shadow-sm">KPU KABUPATEN KUNINGAN</h1>
+    <p class="text-lg text-amber-200 tracking-widest uppercase font-medium">Buku Tamu Digital Satker</p>
+    <div class="mt-8 px-6 py-3 bg-white/20 backdrop-blur-md rounded-full text-sm font-semibold animate-pulse">
+      Menyiapkan Dashboard Berkelas...
+    </div>
+  </div>
+
+  <div class="flex h-screen overflow-hidden">
+    <aside id="sidebar" class="w-72 bg-indigo-950 text-slate-200 fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-40 flex flex-col justify-between shadow-2xl">
+      <div>
+        <div class="p-6 border-b border-indigo-900/50 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="p-2 bg-amber-500 rounded-xl text-indigo-950 font-bold text-lg shadow-lg shadow-amber-500/30">KPU</div>
+            <div>
+              <h2 class="font-bold text-sm tracking-wide text-white">E-Guest KPU</h2>
+              <p class="text-xs text-slate-400">Kab. Kuningan</p>
+            </div>
+          </div>
+          <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white transition-colors">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+        <nav class="p-4 space-y-2">
+          <button onclick="switchView('dashboard')" id="btn-dashboard" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 font-medium text-sm bg-gradient-to-r from-amber-500 to-amber-600 text-indigo-950 shadow-md">
+            <i class="fa-solid fa-chart-pie text-lg"></i> Dashboard Utama
+          </button>
+          <button onclick="switchView('tamu')" id="btn-tamu" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 text-slate-400 font-medium text-sm hover:bg-white/5 hover:text-white">
+            <i class="fa-solid fa-address-book text-lg"></i> Data Tamu Digital
+          </button>
+        </nav>
+      </div>
+    </aside>
+
+    <div id="mainContent" class="flex-1 flex flex-col h-full overflow-y-auto transition-all duration-300 ease-in-out md:pl-72 pl-0">
+      <header class="glass sticky top-0 z-30 px-6 py-4 flex items-center justify-between border-b border-slate-200/60 shadow-sm">
+        <div class="flex items-center gap-4">
+          <button onclick="toggleSidebar()" class="p-2.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95 transition-all">
+            <i class="fa-solid fa-bars-staggered text-lg"></i>
+          </button>
+          <h1 id="pageTitle" class="text-xl font-bold tracking-tight text-slate-900">Dashboard Visual</h1>
+        </div>
+        <button onclick="openModalForm()" class="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-semibold px-5 py-2.5 rounded-xl text-sm shadow-lg shadow-indigo-600/20 active:scale-95 transition-all">
+          <i class="fa-solid fa-user-plus"></i> Isi Buku Tamu
+        </button>
+      </header>
+
+      <main class="p-6 max-w-7xl w-full mx-auto space-y-6">
+        
+        <div id="view-dashboard" class="space-y-6">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div class="p-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl text-white shadow-xl shadow-blue-500/10 flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-blue-100">Tamu Hari Ini</p>
+                <h3 id="kpi-hari" class="text-4xl font-extrabold mt-1">0</h3>
+              </div>
+              <div class="p-4 bg-white/10 rounded-xl text-2xl"><i class="fa-solid fa-calendar-day"></i></div>
+            </div>
+            
+            <div onclick="openBreakdown('bulan')" class="p-6 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl text-white shadow-xl shadow-purple-500/10 flex items-center justify-between cursor-pointer hover:scale-[1.02] transition-transform">
+              <div>
+                <p class="text-sm font-medium text-purple-100 flex items-center gap-1">Tamu Bulan Ini <i class="fa-solid fa-magnifying-glass-chart text-xs"></i></p>
+                <h3 id="kpi-bulan" class="text-4xl font-extrabold mt-1">0</h3>
+              </div>
+              <div class="p-4 bg-white/10 rounded-xl text-2xl"><i class="fa-solid fa-calendar-days"></i></div>
+            </div>
+            
+            <div onclick="openBreakdown('tahun')" class="p-6 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl text-white shadow-xl shadow-amber-500/10 flex items-center justify-between cursor-pointer hover:scale-[1.02] transition-transform">
+              <div>
+                <p class="text-sm font-medium text-amber-100 flex items-center gap-1">Tamu Tahun Ini <i class="fa-solid fa-magnifying-glass-chart text-xs"></i></p>
+                <h3 id="kpi-tahun" class="text-4xl font-extrabold mt-1">0</h3>
+              </div>
+              <div class="p-4 bg-white/10 rounded-xl text-2xl"><i class="fa-solid fa-circle-check"></i></div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 flex flex-col justify-between">
+              <h4 class="font-bold text-slate-800 mb-4 text-sm uppercase tracking-wider text-slate-400">Tren Kunjungan (7 Hari Terakhir)</h4>
+              <div class="h-64"><canvas id="lineChart"></canvas></div>
+            </div>
+            <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 flex flex-col justify-between">
+              <h4 class="font-bold text-slate-800 mb-4 text-sm uppercase tracking-wider text-slate-400">Sebaran Berdasarkan Sub Bagian</h4>
+              <div class="h-64 flex justify-center"><canvas id="pieChart"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-tamu" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+          <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div class="relative w-full max-w-xs">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fa-solid fa-magnifying-glass text-xs"></i></span>
+              <input type="text" id="tableSearch" onkeyup="searchTable()" placeholder="Cari nama atau instansi..." class="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="bg-slate-100/70 text-slate-600 uppercase tracking-wider font-semibold border-b border-slate-200">
+                  <th class="p-4 text-center">No</th>
+                  <th class="p-4">Foto</th>
+                  <th class="p-4">Identitas Tamu</th>
+                  <th class="p-4">Tujuan / Sub-Bagian</th>
+                  <th class="p-4">Waktu Masuk</th>
+                  <th class="p-4 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="tamuTableBody" class="divide-y divide-slate-100 text-slate-700">
+                </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <div id="modalForm" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col md:flex-row border border-slate-100 animate-fadeIn">
+      <div class="md:w-1/2 bg-slate-900 p-6 flex flex-col justify-center items-center gap-4 rounded-t-3xl md:rounded-l-3xl md:rounded-tr-none">
+        <h3 class="text-white font-bold text-sm tracking-wide uppercase text-amber-400">Verifikasi Kamera Tamu</h3>
+        <div class="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-inner border border-white/10">
+          <video id="video" class="w-full h-full object-cover rounded-lg" autoplay playsinline muted></video>
+          <canvas id="canvas" class="w-full h-full object-cover hidden"></canvas>
+          <img id="capturedImage" class="w-full h-full object-cover hidden">
+        </div>
+        <div class="flex gap-2 w-full">
+          <button type="button" onclick="captureSnapshot()" class="flex-1 bg-amber-500 text-indigo-950 font-bold py-2.5 rounded-xl text-xs active:scale-95 transition-all"><i class="fa-solid fa-camera mr-1"></i> Ambil Foto</button>
+          <button type="button" onclick="retakePhoto()" class="bg-white/10 text-white font-medium px-4 py-2.5 rounded-xl text-xs hover:bg-white/20 transition-all"><i class="fa-solid fa-rotate-left"></i> Ulang</button>
+        </div>
+      </div>
+      <form id="guestForm" onsubmit="submitGuestForm(event)" class="md:w-1/2 p-8 space-y-4 flex flex-col justify-between">
+        <div>
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-slate-900">Formulir Kedatangan</h3>
+            <button type="button" onclick="closeModalForm()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-circle-xmark text-xl"></i></button>
+          </div>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1">Nama Lengkap</label>
+              <input type="text" name="nama" required class="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Instansi / Asal</label>
+                <input type="text" name="instansi" required class="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">No Whatsapp</label>
+                <input type="number" name="whatsapp" required placeholder="08xxxx" class="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none">
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1">Tujuan / Sub-Bagian</label>
+              <select name="tujuan" required class="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <option value="">-- Pilih Tujuan --</option>
+                <option value="Ketua KPU Kab. Kuningan">Ketua KPU Kab. Kuningan</option>
+                <option value="Anggota KPU Kab. Kuningan">Anggota KPU Kab. Kuningan</option>
+                <option value="Sekretaris KPU Kb. Kuningan">Sekretaris KPU Kb. Kuningan</option>
+                <option value="Sub Bagian Keuangan, Umum, dan Logistik">Sub Bagian Keuangan, Umum, dan Logistik</option>
+                <option value="Sub Bagian Perencanaan, Data dan Informasi">Sub Bagian Perencanaan, Data dan Informasi</option>
+                <option value="Sub Bagian Teknis Penyelenggaraan Pemilu dan Hukum">Sub Bagian Teknis Penyelenggaraan Pemilu dan Hukum</option>
+                <option value="Sub Bagian Partisipasi dan Hubungan Masyarakat dan Sumber Daya Manusia">Sub Bagian Partisipasi dan Hubungan Masyarakat dan Sumber Daya Manusia</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1">Keperluan / Urusan</label>
+              <textarea name="keperluan" rows="2" required class="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold py-3 rounded-xl text-sm shadow-xl shadow-indigo-600/10 active:scale-95 transition-all mt-4">Submit ✨</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="modalBreakdown" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl w-full max-w-md p-6 border border-slate-100 shadow-2xl">
+      <div class="flex justify-between items-center mb-4">
+        <h3 id="breakdownTitle" class="text-base font-bold text-slate-900">Breakdown Kunjungan</h3>
+        <button onclick="closeBreakdown()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-circle-xmark text-lg"></i></button>
+      </div>
+      <div id="breakdownContent" class="max-h-60 overflow-y-auto space-y-2 text-xs">
+        </div>
+    </div>
+  </div>
+
+  <script>
+    // ⚠️ URL WEB APP (/exec) YANG DIDAPATKAN SETELAH DEPLOY DI GOOGLE APPS SCRIPT
+    const URL_API_GOOGLE = "https://script.google.com/macros/s/AKfycbxwsovBlWk5vxTLUssCEp70YFV0Va5DXfgUEznz_pGNNTBtqmhgsAb8yykcMQDHSbD_ow/exec";
+
+    let currentView = 'dashboard';
+    let lineChartInstance = null;
+    let pieChartInstance = null;
+    let streamInstance = null;
+    let rawDashboardData = null;
+
+    // Menghilangkan Welcome Screen otomatis setelah 2.5 Detik
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        const welcome = document.getElementById('welcomeScreen');
+        welcome.classList.add('opacity-0', 'pointer-events-none');
+        refreshData();
+      }, 2500);
+    });
+
+    // Navigasi Router Antar Halaman
+    function switchView(view) {
+      currentView = view;
+      document.getElementById('view-dashboard').classList.add('hidden');
+      document.getElementById('view-tamu').classList.add('hidden');
+      document.getElementById('btn-dashboard').className = "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-slate-400 font-medium text-sm hover:bg-white/5 hover:text-white";
+      document.getElementById('btn-tamu').className = "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-slate-400 font-medium text-sm hover:bg-white/5 hover:text-white";
+
+      if (view === 'dashboard') {
+        document.getElementById('view-dashboard').classList.remove('hidden');
+        document.getElementById('btn-dashboard').className = "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 font-medium text-sm bg-gradient-to-r from-amber-500 to-amber-600 text-indigo-950 shadow-md";
+        document.getElementById('pageTitle').innerText = "Dashboard Visual";
+      } else {
+        document.getElementById('view-tamu').classList.remove('hidden');
+        document.getElementById('btn-tamu').className = "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 font-medium text-sm bg-gradient-to-r from-amber-500 to-amber-600 text-indigo-950 shadow-md";
+        document.getElementById('pageTitle').innerText = "Data Tamu Digital";
+      }
+    }
+
+    // LOGIKA TOGGLE SIDEBAR ADAPTIF SCREEN SIZE
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.getElementById('mainContent');
+      const isDesktop = window.innerWidth >= 768;
+
+      if (isDesktop) {
+        if (mainContent.classList.contains('md:pl-72')) {
+          sidebar.classList.remove('md:translate-x-0');
+          sidebar.classList.add('-translate-x-full');
+          mainContent.classList.remove('md:pl-72');
+          mainContent.classList.add('md:pl-0');
+        } else {
+          sidebar.classList.remove('-translate-x-full');
+          sidebar.classList.add('md:translate-x-0');
+          mainContent.classList.remove('md:pl-0');
+          mainContent.classList.add('md:pl-72');
+        }
+      } else {
+        if (sidebar.classList.contains('-translate-x-full')) {
+          sidebar.classList.remove('-translate-x-full');
+          sidebar.classList.add('translate-x-0');
+        } else {
+          sidebar.classList.remove('translate-x-0');
+          sidebar.classList.add('-translate-x-full');
+        }
+      }
+    }
+
+    // Mengambil data Dashboard & Tabel via Fetch API
+    function refreshData() {
+      // 1. Ambil data analitik Dashboard
+      fetch(URL_API_GOOGLE, {
+        method: "POST",
+        body: JSON.stringify({ action: "ambilDashboard" })
+      })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          renderDashboard(res.data);
+        } else {
+          console.error("Gagal memuat dashboard:", res.message);
+        }
+      })
+      .catch(err => console.error("Network Error (Dashboard):", err));
+
+      // 2. Ambil data log list Tabel Tamu
+      fetch(URL_API_GOOGLE, {
+        method: "POST",
+        body: JSON.stringify({ action: "ambilData" })
+      })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          renderTable(res.data);
+        } else {
+          console.error("Gagal memuat tabel tamu:", res.message);
+        }
+      })
+      .catch(err => console.error("Network Error (Tabel):", err));
+    }
+
+    function renderDashboard(res) {
+      rawDashboardData = res;
+      document.getElementById('kpi-hari').innerText = res.kpi.hari;
+      document.getElementById('kpi-bulan').innerText = res.kpi.bulan;
+      document.getElementById('kpi-tahun').innerText = res.kpi.tahun;
+
+      // Render Line Chart (Tren Kunjungan)
+      if (lineChartInstance) lineChartInstance.destroy();
+      const ctxLine = document.getElementById('lineChart').getContext('2d');
+      lineChartInstance = new Chart(ctxLine, {
+        type: 'line',
+        data: {
+          labels: res.lineChart.labels,
+          datasets: [{
+            label: 'Jumlah Tamu',
+            data: res.lineChart.values,
+            borderColor: '#4f46e5',
+            backgroundColor: 'rgba(79, 70, 229, 0.05)',
+            fill: true,
+            tension: 0.3,
+            borderWidth: 3
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      // Render Pie Chart (Sebaran Sub Bagian)
+      if (pieChartInstance) pieChartInstance.destroy();
+      const ctxPie = document.getElementById('pieChart').getContext('2d');
+      pieChartInstance = new Chart(ctxPie, {
+        type: 'pie',
+        data: {
+          labels: res.pieChart.labels.map(l => l.length > 20 ? l.substring(0, 20) + '...' : l),
+          datasets: [{
+            data: res.pieChart.values,
+            backgroundColor: ['#f59e0b', '#3b82f6', '#ec4899', '#10b981', '#8b5cf6', '#ef4444', '#6366f1']
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    function renderTable(rows) {
+      const tbody = document.getElementById('tamuTableBody');
+      tbody.innerHTML = '';
+      if(!rows || rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-slate-400">Belum ada data tamu terekam.</td></tr>`;
+        return;
+      }
+      rows.forEach(row => {
+        let imgTag = row.foto !== '-' ? `<img src="${row.foto}" onclick="viewFullImage('${row.foto}')" class="w-10 h-10 object-cover rounded-full border border-slate-200 cursor-zoom-in hover:scale-105 transition-transform">` : `<div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400"><i class="fa-solid fa-user text-xs"></i></div>`;
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50/80 transition-colors">
+            <td class="p-4 text-center font-medium text-slate-500">${row.no}</td>
+            <td class="p-4">${imgTag}</td>
+            <td class="p-4">
+              <div class="font-bold text-slate-900">${row.nama}</div>
+              <div class="text-slate-400 text-[11px]">${row.instansi} • WA: ${row.whatsapp}</div>
+            </td>
+            <td class="p-4">
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-600 block w-fit max-w-[200px] truncate" title="${row.tujuan}">${row.tujuan}</span>
+              <div class="text-slate-500 mt-1 italic">"${row.keperluan}"</div>
+            </td>
+            <td class="p-4 text-slate-500">${row.timestamp}</td>
+            <td class="p-4 text-center">
+              <button onclick="hapusRow(${row.no})" class="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    // Modal KPI Drilldown Klik
+    function openBreakdown(type) {
+      if (!rawDashboardData) return;
+      const title = document.getElementById('breakdownTitle');
+      const content = document.getElementById('breakdownContent');
+      content.innerHTML = '';
+      
+      if(type === 'bulan') {
+        title.innerText = "Kunjungan Per Bulan (Tahun Ini)";
+        const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        rawDashboardData.breakdownBulan.forEach((val, idx) => {
+          content.innerHTML += `<div class="flex justify-between p-2.5 bg-slate-50 rounded-xl"><strong>${namaBulan[idx]}</strong> <span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-md font-bold">${val} Tamu</span></div>`;
+        });
+      } else {
+        title.innerText = "Kunj
